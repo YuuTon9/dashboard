@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="todo2style.css">
+	<link rel="shortcut icon" href="#" />
+</head>
+<body>
+	<div class="navicontain">
+	    <ul class="navigateul">
+	      <li class="navibutton"><a href= "testinghttpclient.html"> home </a></li>
+	      <li class="navibutton">progress</li>
+	      <li class="navibutton">dashboard</li>
+	      <li style="float:right" class="navibutton" id="logout"> Sign Out </li> 
+	      <li id="welcome"> </li>
+	      <li id="coins"> </li>
+    </ul>
+  	</div>
+  	<div id = containcanvas>
+  		<button id='shopButton'> Shop </button>
+		<canvas id="bg"> </canvas>
+		<canvas id="fg"> </canvas>
+		<div id="shop">
+			<img id = "bgimg" src="waterfall.png"> 
+		</div>
+		<div id = "buttonsContain"> </div>
+	</div>
+
+	<!-- <script src = "./jquery-3.4.1.min.js" type = "text/javascript"></script> -->
+	<script src = "scene2.js" type = "text/javascript"></script>
+	<script src = "shop.js" type = "text/javascript"></script>
+	<script src = "sprite2.js" type = "text/javascript"></script>
+    <script>
+
+    	var background = document.getElementById("bg");
+    	background.width = 1408;
+		background.height = 832;
+    	var cxt_bg = background.getContext('2d');
+    	var foreground = document.getElementById("fg");
+    	foreground.width = 1408;
+    	foreground.height = 832;
+    	var cxt_fg = foreground.getContext('2d');
+    	var items_added = []; //for game saving
+
+    	var buttonContain = document.getElementById('buttonsContain');
+    	buttonContain.style.zIndex = "6";
+    	var shopcontain = document.getElementById('shop');
+    	shopcontain.style.zIndex = "5";
+
+
+		var shop = new Shop();
+		shop.loadpic();
+		shop.loadItems();
+		shop.addButtons(document.getElementById("buttonsContain"));
+
+		var girl = new Sprite("princess.png", [[0,1,2,3,4,5,6,7,8],[9,10,11,12,13,14,15,16],[17,18,19,20,21,22,23,24],[25,26,27,28,29,30,31,32]], [64, 64], [300,300],'right');
+
+
+
+    	document.getElementById('shopButton').onclick = function() {
+    		buttonContain.style.zIndex = "" + -1 * parseInt(buttonContain.style.zIndex);
+    		shopcontain.style.zIndex = "" + -1 * parseInt(shopcontain.style.zIndex);
+    	};
+
+    	var prices = document.querySelectorAll(".itemPrice");
+    	for(var i = 0; i < prices.length; i++) {
+    		prices[i].addEventListener('click', function(event) {
+    			const elem = event.target;
+    			const id = elem.id;
+    			var done = false;		
+
+    			foreground.addEventListener('click', function(evt) {
+    				var x = evt.offsetX-20;
+	   				var y = evt.offsetY-20;
+    				shop.drawImg(id,cxt_fg,x,y);
+    				evt.target.removeEventListener(evt.type, arguments.callee);
+
+    			});
+    		});
+    	};
+
+		/*
+
+		var gameState = {
+			...
+		};
+*/
+		
+
+	</script>
+
+</body>
+</html>
