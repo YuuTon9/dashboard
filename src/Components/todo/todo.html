@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Sign in/Sign up </title>
+  <link rel="stylesheet" type="text/css" href="todo2style.css">
+</head>
+
+<body style="background-color:lavender">
+  <div class="navicontain">
+    <ul class="navigateul">
+      <li class="navibutton">home</li>
+      <li class="navibutton">progress</li>
+      <li class="navibutton">dashboard</li>
+      <li style="float:right" class="navibutton" id="logout"> Sign Out </li> 
+      <li id="welcome"> </li>
+      <li id="coins"> </li>
+
+    </ul>
+  </div>
+  <div class="container arial"> 
+    <div class="top">
+      <p id="date"> </p>
+    </div>
+
+    <div class="listcontainer">
+      <ul id="tasks">
+      </ul>
+    </div>
+    <input type="text" id="addInput" placeholder="Add a task">
+    <span class="addButton" id="addButton">+</span>
+  </div>
+  </div>
+
+  <script src="/__/firebase/6.2.0/firebase-app.js"></script>
+    <script src="/__/firebase/6.2.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-firestore.js"></script>
+    <script src="/__/firebase/init.js"></script>
+
+    <script type="text/javascript">
+
+    //date
+    var d = new Date();
+    var day = d.getDay();
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    var date = d.getDate();
+    var month = d.getMonth();
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var year = d.getFullYear();
+    document.getElementById("date").innerHTML = date + " " + months[month] + " " + year + " " + days[day];
+
+    var db = firebase.firestore();
+    var input = document.getElementById("addInput");
+    var list = document.getElementById("tasks");
+    var addbutton = document.querySelector("addButton")
+    var coins = document.getElementById("coins");
+    var coinsNum;
+    let id, todosArr;
+    var userId,userRef;
+
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) { //user is logged in 
+        userId = firebase.auth().currentUser.uid;
+        userRef = db.collection("users").doc(userId);
+        document.getElementById("welcome").innerHTML = user.displayName;
+        //checking if user is new or existing
+        userRef.get().then(function(doc) {
+          if (!doc.exists) { //new user
+            id = 0;
+            todosArr = [];
+            userRef.set({todo: [], coins: 0});
+            coinsNum = 0;
+          } else { //existing user
+            todosArr = doc.data().todo;
+            id = todosArr.length;
+            todosArr.forEach(function(task) {
+              newTask(task.text, task.complete, task.trash, task.id);
+            });
+            coinsNum = doc.data().coins;
+          }
+          console.log(doc.data());
+          coins.innerHTML = "coins: " + coinsNum;
+        });
+
+        
+        //add task by pressing enter
+        document.addEventListener("keyup", function(event) {
+          if (event.keyCode == 13) {
+            pressAdd();
+          }
+        });
+
+        //toggle between completing task and removing task when user clicks on li
+        list.addEventListener('click', function(event) {
+          const element = event.target;
+          if (element.tagName == 'LI') {
+            completeTask(element, false);
+          } else {
+            removeTask(element);
+          }
+        });
+
+        document.getElementById('logout').addEventListener('click', signOut, false);
+        //addbutton.addEventListener('click', pressAdd());
+
+        //sign out
+        function signOut() {
+          firebase.auth().signOut().then(function() {
+            window.location = "index.html";
+          });
+        } 
+
+        //append delete button behind every li created
+        function appendCross(liElement) {
+          const span = document.createElement("SPAN");
+          const cross = document.createTextNode("x");
+          span.className = "delete";
+          span.appendChild(cross);
+          liElement.appendChild(span);
+        }
+
+        //create new task
+        function newTask(text, complete, trash, id) {
+          const li = document.createElement("li");
+          if (trash) {
+            return;
+          } else {
+            li.textContent = text;
+            document.getElementById("tasks").appendChild(li);
+            li.id = id;
+            appendCross(li);
+            input.value = "";
+            if (complete) {
+              completeTask(li, true);
+            }
+          }
+        }
+
+        //call this function when user wants to add a task
+        function pressAdd() {
+          if (input.value == '') {
+            alert("Please type something!");
+          } else {
+              todosArr.push({
+                text : input.value,
+                complete : false,
+                trash : false,
+                id : id
+              });
+              userRef.update({todo: todosArr});
+              newTask(input.value, false, false, id);
+              id++;
+          }
+
+        }
+
+        //completed task, line through
+        function completeTask(element, storage) {
+          element.classList.toggle("complete");
+          if (!storage) { //if the task was not loaded from storage
+            if (todosArr[element.id].complete) {
+              todosArr[element.id].complete = false;
+              coinsNum--;
+            } else {
+              todosArr[element.id].complete = true;
+              coinsNum++;
+            }
+
+            userRef.update({todo: todosArr});
+            userRef.update({coins: coinsNum});
+            coins.innerHTML = "coins: " + coinsNum;
+          }
+        }
+
+        //delete a task
+        function removeTask(element) {
+          todosArr[element.parentNode.id].trash = true;
+          userRef.update({todo: todosArr});
+          element.parentNode.parentNode.removeChild(element.parentNode);
+        }
+
+      } else { //no user logged in
+        console.log("no user signed in");
+      }
+    });
+  
+
+  </script>
+
+</body>
+</html>
